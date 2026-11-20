@@ -188,6 +188,16 @@ body {
   border-radius: var(--radius-sm);
 }
 
+/* ---------------------------------------------------------- quick / deep choice */
+.depth { border: 0; padding: 0; margin: 0 0 20px; }
+.depth legend { font-size: 13.5px; font-weight: 600; margin-bottom: 8px; padding: 0; }
+.depth-opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); margin-bottom: 8px; cursor: pointer; background: var(--paper); }
+.depth-opt:has(input:checked) { border-color: var(--brand); background: var(--brand-wash); }
+.depth-opt input { margin-top: 4px; accent-color: var(--brand); }
+.depth-opt b { display: block; font-size: 14px; }
+.depth-opt small { display: block; font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; }
+
 /* ---------------------------------------------------------- result side: idle */
 .idle { display: flex; flex-direction: column; align-items: flex-start; }
 .idle-mark { color: var(--brand); margin-bottom: 14px; }
@@ -291,6 +301,14 @@ body {
   cursor: pointer;
 }
 .again:hover { background: var(--brand-wash); }
+
+/* ---------------------------------------------------------- two-part results */
+.block-label { font-family: var(--display); font-size: 13px; font-weight: 600; color: var(--brand); margin: 0 0 6px; }
+.block-label:empty { display: none; }
+.reading + .reading, .reading + .page-fail { margin-top: 30px; padding-top: 26px; border-top: 1px dashed var(--border); }
+.page-fail .read-as { font-family: var(--mono); font-size: 13px; color: var(--ink-faint); word-break: break-all; margin: 0 0 10px; }
+.fail-text { margin: 0 0 6px; padding: 11px 14px; background: var(--caution-wash); color: var(--ink); border-radius: var(--radius-sm); font-size: 14.5px; }
+.fail-note { margin: 0; font-size: 13px; color: var(--ink-soft); }
 
 /* ---------------------------------------------------------- footer */
 .footbar {

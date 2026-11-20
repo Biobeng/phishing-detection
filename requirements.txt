@@ -7,3 +7,5 @@ xgboost==3.4.1
 joblib==1.6.0
 tldextract==5.4.0
 gunicorn==23.0.0
+requests==2.34.2
+beautifulsoup4==4.15.0

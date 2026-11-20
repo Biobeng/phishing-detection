@@ -8,6 +8,11 @@ Final year project, Department of Computer Science, University of Ibadan.
   Regression on character n-grams, averaged
 - Each check returns a score from 0 to 100 and a band: legitimate, not clear
   cut, or phishing
+- Links can be checked two ways. The Quick check reads only the address. The
+  Deep check also downloads the page as plain text (no scripts run, nothing
+  rendered) and scores what it contains with a second model trained on the
+  PhiUSIIL page features. Private and reserved network addresses are never
+  visited.
 
 ## Running it on your laptop
 

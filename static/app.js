@@ -18,7 +18,7 @@ function setMode(next) {
     t.classList.toggle('is-on', on);
     t.setAttribute('aria-selected', on);
   });
-  document.querySelectorAll('.field').forEach(f => { f.hidden = f.dataset.for !== next; });
+  document.querySelectorAll('.field, .depth').forEach(f => { f.hidden = f.dataset.for !== next; });
   runBtn.querySelector('.run-label').textContent = next === 'link' ? 'Scan this link' : 'Scan this message';
   hideNotice();
 }
@@ -45,10 +45,16 @@ function signalRow(s) {
   return li;
 }
 
-function render(data) {
+function isDeep() {
+  const d = document.querySelector('input[name="depth"]:checked');
+  return mode === 'link' && d && d.value === 'deep';
+}
+
+function reading(data, label, withAgain) {
   const node = tpl.content.cloneNode(true);
   const box = node.querySelector('.reading');
   box.classList.add('is-' + data.verdict);
+  box.querySelector('.block-label').textContent = label;
 
   box.querySelector('.read-as').textContent = data.read_as;
   box.querySelector('.verdict').textContent = WORDS[data.verdict].title;
@@ -74,14 +80,33 @@ function render(data) {
   const signals = box.querySelector('.signals');
   data.signals.forEach(s => signals.appendChild(signalRow(s)));
 
-  box.querySelector('.again').addEventListener('click', () => {
-    const field = document.getElementById(mode === 'link' ? 'link' : 'body');
-    field.value = '';
-    field.focus();
-  });
+  const again = box.querySelector('.again');
+  if (withAgain) {
+    again.addEventListener('click', () => {
+      const field = document.getElementById(mode === 'link' ? 'link' : 'body');
+      field.value = '';
+      field.focus();
+    });
+  } else {
+    again.remove();
+  }
+  return { node, marker, score: data.score };
+}
 
-  result.replaceChildren(node);
-  requestAnimationFrame(() => { marker.style.left = data.score + '%'; });
+function render(data) {
+  const blocks = [];
+  const label = data.mode === 'link' ? (data.page ? 'Quick check: the address' : '') : '';
+  blocks.push(reading(data, label, !data.page));
+  if (data.page && data.page.ok) {
+    blocks.push(reading(data.page, 'Deep check: the page itself', true));
+  } else if (data.page) {
+    const f = document.getElementById('tpl-page-fail').content.cloneNode(true);
+    f.querySelector('.read-as').textContent = data.page.read_as || '';
+    f.querySelector('.fail-text').textContent = data.page.reason;
+    blocks.push({ node: f });
+  }
+  result.replaceChildren(...blocks.map(b => b.node));
+  requestAnimationFrame(() => blocks.forEach(b => { if (b.marker) b.marker.style.left = b.score + '%'; }));
 }
 
 form.addEventListener('submit', async (e) => {
@@ -90,10 +115,11 @@ form.addEventListener('submit', async (e) => {
   const payload = {
     mode,
     text: mode === 'link' ? document.getElementById('link').value : document.getElementById('body').value,
-    subject: document.getElementById('subject').value
+    subject: document.getElementById('subject').value,
+    deep: isDeep()
   };
   runBtn.disabled = true;
-  runBtn.querySelector('.run-label').textContent = 'Scanning…';
+  runBtn.querySelector('.run-label').textContent = isDeep() ? 'Visiting the page…' : 'Scanning…';
   try {
     const res = await fetch('/api/check', {
       method: 'POST',

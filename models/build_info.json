@@ -31,6 +31,18 @@
     "email_parts.joblib": {
       "bytes": 4891307,
       "sha256": "03027b6e0442406ce12f8c790416c0b055706c23504cd27a880917fa951caa92"
+    },
+    "page_rf_forest.npz": {
+      "bytes": 3110375,
+      "sha256": "b8ce7f4e9205cbee54208f8a02628acaedb3904cbcaa3e0ef5493abf44bf66e0"
+    },
+    "page_xgb.ubj": {
+      "bytes": 725184,
+      "sha256": "6b00fa3962ebb0cbaacd3e969d97898a6db80d3e3bf97518912cd4422b3efb62"
+    },
+    "page_parts.joblib": {
+      "bytes": 1450,
+      "sha256": "76ce19f309d9980171258b8d895a2a8000de15d3e8fa97fe8c61deb549ba056e"
     }
   }
 }

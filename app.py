@@ -2,8 +2,8 @@
 Intelligent Phishing Detection System for Emails and Websites.
 
 Flask back end. It loads the two saved models once at start up, then scores
-whatever the user pastes in. The system reads text only. It never opens or
-visits a submitted link.
+whatever the user pastes in. The Quick check reads the address as text only. The Deep check
+also downloads the page as text, never running anything on it (see pagefetch.py).
 """
 import os
 import re
@@ -20,6 +20,8 @@ sys.path.insert(0, HERE)
 import urlfeatures as uf          # noqa: E402
 import urlprep as up              # noqa: E402
 from compactforest import CompactForest  # noqa: E402
+import pagefeatures as pf         # noqa: E402
+import pagefetch                  # noqa: E402
 
 MODELS = os.environ.get("MODEL_DIR", os.path.join(HERE, "models"))
 
@@ -63,6 +65,16 @@ try:
     email_parts = joblib.load(os.path.join(MODELS, "email_parts.joblib"))
 except Exception as problem:
     fail("email_parts.joblib", problem)
+
+# The Deep check's page model. If it is missing, the app runs without the Deep check.
+page_parts, page_rf, page_xgb = None, None, None
+try:
+    page_parts = joblib.load(os.path.join(MODELS, "page_parts.joblib"))
+    page_rf = CompactForest(os.path.join(MODELS, "page_rf_forest.npz"))
+    page_xgb = booster("page_xgb.ubj")
+except Exception as problem:
+    page_parts = None
+    print(f"\nThe page model did not load ({type(problem).__name__}: {problem}). Deep check is off.\n")
 
 # If a booster will not load the app still runs, scoring with the models that
 # did load, and the interface shows which ones those were.
@@ -112,6 +124,63 @@ def score_email(document):
         parts.append({"name": "XGBoost", "score": float(email_xgb.predict(xgboost.DMatrix(vector))[0])})
     parts.append({"name": "Naive Bayes", "score": float(email_parts["nb"].predict_proba(vector)[0, 1])})
     return sum(p["score"] for p in parts) / len(parts), parts
+
+
+def score_page(feats):
+    import numpy as np
+    x = np.array([[feats[k] for k in pf.FEATURES]], dtype=np.float32)
+    parts = [
+        {"name": "Random Forest", "score": float(page_rf.predict_proba(x)[0, 1])},
+        {"name": "XGBoost", "score": float(page_xgb.predict(xgboost.DMatrix(x, feature_names=None))[0])},
+        {"name": "Logistic Regression", "score": float(page_parts["lr"].predict_proba(x)[0, 1])},
+    ]
+    return sum(p["score"] for p in parts) / len(parts), parts
+
+
+def page_signals(feats, info, fetched, asked):
+    out = [{"label": "Page title", "value": info["title"] or "None"}]
+    if fetched["redirects"]:
+        moved = pf.site(fetched["url"]) != pf.site(asked)
+        out.append({"label": "Redirected", "value": f"{len(fetched['redirects'])} time(s), ended on {pf.site(fetched['url'])}",
+                    "flag": moved})
+    out.append({"label": "Asks for a password", "value": "Yes" if feats["HasPasswordField"] else "No",
+                "flag": bool(feats["HasPasswordField"])})
+    if info["external_forms"]:
+        out.append({"label": "Form sends data to", "value": ", ".join(info["external_forms"][:3]), "flag": True})
+    mentions = [w for w, k in (("bank", "Bank"), ("pay", "Pay"), ("crypto", "Crypto")) if feats[k]]
+    if mentions:
+        out.append({"label": "Mentions", "value": ", ".join(mentions)})
+    found = [n for n, k in (("description", "HasDescription"), ("copyright notice", "HasCopyrightInfo"),
+                            ("social media links", "HasSocialNet"), ("site icon", "HasFavicon")) if feats[k]]
+    out.append({"label": "Usual parts of a real site", "value": ", ".join(found) if found else "None found",
+                "flag": not found})
+    return out
+
+
+def deep_check(raw):
+    """Visit the page safely and score what is on it. Never raises."""
+    if page_parts is None:
+        return {"ok": False, "reason": "The Deep check is not available on this server."}
+    try:
+        fetched = pagefetch.fetch(raw)
+    except pagefetch.FetchError as e:
+        return {"ok": False, "reason": str(e)}
+    feats, info = pf.extract(fetched["html"], fetched["url"])
+    if not info["readable"]:
+        reason = ("The page builds itself with scripts, and scripts are never run here, so there was too little to read."
+                  if info["scripts"] else "The page has almost nothing on it, so there was too little to read.")
+        return {"ok": False, "reason": reason, "read_as": fetched["url"]}
+    score, models = score_page(feats)
+    low, high = page_parts["low"], page_parts["high"]
+    return {
+        "ok": True,
+        "verdict": band(score, low, high),
+        "score": round(score * 100, 1),
+        "models": [{"name": m["name"], "score": round(m["score"] * 100, 1)} for m in models],
+        "signals": page_signals(feats, info, fetched, raw),
+        "read_as": fetched["url"],
+        "marks": {"low": low * 100, "high": high * 100},
+    }
 
 
 def link_signals(row, form):
@@ -165,7 +234,9 @@ def check():
         signals = link_signals(row, form)
         read_as = text
         low, high = URL_LOW, URL_HIGH
+        page = deep_check(raw) if payload.get("deep") else None
     else:
+        page = None
         words = len(raw.split())
         if not raw:
             return jsonify(error="Paste the body of the email you want checked."), 400
@@ -188,6 +259,8 @@ def check():
         read_as=read_as,
         marks={"low": low * 100, "high": high * 100},
         mode=mode,
+        page=page,
+        deep_available=page_parts is not None,
     )
 
 

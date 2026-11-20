@@ -49,6 +49,18 @@
         <input type="text" id="link" placeholder="example.com/account/signin" spellcheck="false">
       </div>
 
+      <fieldset class="depth" data-for="link">
+        <legend>Type of check</legend>
+        <label class="depth-opt">
+          <input type="radio" name="depth" value="quick" checked>
+          <span><b>Quick check</b><small>Reads the address only. Nothing is opened.</small></span>
+        </label>
+        <label class="depth-opt">
+          <input type="radio" name="depth" value="deep">
+          <span><b>Deep check</b><small>Also downloads the page on our server as plain text, without running anything on it, and checks what it asks for.</small></span>
+        </label>
+      </fieldset>
+
       <div class="field" data-for="email" hidden>
         <label for="body">Message</label>
         <textarea id="body" rows="10" placeholder="Paste the body of the email here"></textarea>
@@ -65,6 +77,7 @@
       <h3>What's running underneath</h3>
       <dl>
         <div><dt>Links</dt><dd>XGBoost, Random Forest and Logistic Regression, averaged</dd></div>
+        <div><dt>Pages</dt><dd>Deep check: Random Forest, XGBoost and Logistic Regression on what the page contains</dd></div>
         <div><dt>Emails</dt><dd>Random Forest, XGBoost and Naive Bayes, soft vote</dd></div>
         <div><dt>Cut points</dt><dd>Set on held-out data the models never trained on</dd></div>
         <div><dt>Trained on</dt><dd>PhishTank, Tranco, Kaggle MUD, PhiUSIIL, Nazario, SpamAssassin, Enron</dd></div>
@@ -96,6 +109,7 @@
 
 <template id="tpl-result">
   <div class="reading">
+    <p class="block-label"></p>
     <p class="read-as"></p>
     <div class="verdict-row">
       <span class="verdict-icon" aria-hidden="true">
@@ -132,6 +146,15 @@
     <ul class="signals"></ul>
 
     <button class="again" type="button">Scan something else</button>
+  </div>
+</template>
+
+<template id="tpl-page-fail">
+  <div class="page-fail">
+    <p class="block-label">Deep check: the page itself</p>
+    <p class="read-as"></p>
+    <p class="fail-text"></p>
+    <p class="fail-note">The address check above still stands on its own.</p>
   </div>
 </template>
 
