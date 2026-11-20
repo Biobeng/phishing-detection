@@ -1,0 +1,32 @@
+{
+  "python": "3.13.18",
+  "must_match": {
+    "sklearn": "1.9.1"
+  },
+  "also_used": {
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "pandas": "3.0.5",
+    "joblib": "1.6.0",
+    "xgboost": "3.4.1",
+    "tldextract": "5.4.0"
+  },
+  "files": {
+    "url_xgb.ubj": {
+      "bytes": 531674,
+      "sha256": "9d43ee83fd7802c4443924ce14693a97636f8e886f89059bbd3a8458a66e6e24"
+    },
+    "url_parts.joblib": {
+      "bytes": 39748768,
+      "sha256": "92a7b9cea5ddc4e5063ff638376d33569b083ff687e8888a18fe0f3ab439c4d1"
+    },
+    "email_xgb.ubj": {
+      "bytes": 287405,
+      "sha256": "03cf67a144ed03d8f9adb343c8a10ab584276528b4a32cbf6d293ea816bc588c"
+    },
+    "email_parts.joblib": {
+      "bytes": 4891307,
+      "sha256": "03027b6e0442406ce12f8c790416c0b055706c23504cd27a880917fa951caa92"
+    }
+  }
+}
