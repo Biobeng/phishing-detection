@@ -17,8 +17,12 @@
       "sha256": "9d43ee83fd7802c4443924ce14693a97636f8e886f89059bbd3a8458a66e6e24"
     },
     "url_parts.joblib": {
-      "bytes": 39748768,
-      "sha256": "92a7b9cea5ddc4e5063ff638376d33569b083ff687e8888a18fe0f3ab439c4d1"
+      "bytes": 2901455,
+      "sha256": "5839d6d97f7d184ebcc0e034e2a9f1ef018bc98b48a8504524c6f49eb54eff63"
+    },
+    "url_rf_forest.npz": {
+      "bytes": 18188911,
+      "sha256": "9770d4069db935dbbe49fad947ae3b9999d85cfb2b384f9b1692d112e2034edc"
     },
     "email_xgb.ubj": {
       "bytes": 287405,

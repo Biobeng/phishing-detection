@@ -84,15 +84,17 @@ if wrong:
     sys.exit(1)
 
 # ---- 3. load everything and score something
-print("\nLoading the models. The link model is large, so give it a few seconds.")
+print("\nLoading the models. It takes a few seconds.")
 import joblib  # noqa: E402
 import pandas as pd  # noqa: E402
 import xgboost  # noqa: E402
 
 import urlfeatures as uf  # noqa: E402
+from compactforest import CompactForest  # noqa: E402
 
 try:
     url = joblib.load(os.path.join(HERE, "models", "url_parts.joblib"))
+    url_rf = CompactForest(os.path.join(HERE, "models", "url_rf_forest.npz"))
     email = joblib.load(os.path.join(HERE, "models", "email_parts.joblib"))
     url_xgb = xgboost.Booster(); url_xgb.load_model(os.path.join(HERE, "models", "url_xgb.ubj"))
     email_xgb = xgboost.Booster(); email_xgb.load_model(os.path.join(HERE, "models", "email_xgb.ubj"))
@@ -105,7 +107,7 @@ except Exception as problem:
 link = "paypal-secure-login.verify-account.xyz/signin.php"
 frame = pd.DataFrame([uf.features(link)])
 link_score = (float(url_xgb.predict(xgboost.DMatrix(url["pre_xgb"].transform(frame)))[0])
-              + float(url["rf"].predict_proba(frame)[0, 1])
+              + float(url_rf.predict_proba(url["rf_pre"].transform(frame))[0, 1])
               + float(url["lr"].predict_proba(url["tfidf"].transform([link]))[0, 1])) / 3
 
 text = "Your account has been suspended. Verify your password immediately."

@@ -19,6 +19,7 @@ sys.path.insert(0, HERE)
 
 import urlfeatures as uf          # noqa: E402
 import urlprep as up              # noqa: E402
+from compactforest import CompactForest  # noqa: E402
 
 MODELS = os.environ.get("MODEL_DIR", os.path.join(HERE, "models"))
 
@@ -54,6 +55,10 @@ try:
     url_parts = joblib.load(os.path.join(MODELS, "url_parts.joblib"))
 except Exception as problem:
     fail("url_parts.joblib", problem)
+try:
+    url_rf = CompactForest(os.path.join(MODELS, "url_rf_forest.npz"))
+except Exception as problem:
+    fail("url_rf_forest.npz", problem)
 try:
     email_parts = joblib.load(os.path.join(MODELS, "email_parts.joblib"))
 except Exception as problem:
@@ -92,7 +97,7 @@ def score_link(text):
     if url_xgb is not None:
         matrix = xgboost.DMatrix(url_parts["pre_xgb"].transform(frame))
         parts.append({"name": "XGBoost", "score": float(url_xgb.predict(matrix)[0])})
-    parts.append({"name": "Random Forest", "score": float(url_parts["rf"].predict_proba(frame)[0, 1])})
+    parts.append({"name": "Random Forest", "score": float(url_rf.predict_proba(url_parts["rf_pre"].transform(frame))[0, 1])})
     parts.append({"name": "Logistic Regression",
                   "score": float(url_parts["lr"].predict_proba(url_parts["tfidf"].transform([text]))[0, 1])})
     return sum(p["score"] for p in parts) / len(parts), parts, frame.iloc[0]
